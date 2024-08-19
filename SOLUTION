@@ -1,26 +1,38 @@
 Local DNS Server IP
 -------------------
-<ip-here>
+127.0.0.53
 
 
 
 Default gateway IP
 -------------------
-<ip-here>
+10.0.0.1
 
 
 
 DHCP IP allocation sys-logs
 -------------------
-<logs-here>
+2024-08-17T16:32:47.943738+00:00 ip-10-0-0-70 dhcpcd[441]: dhcpcd-10.0.6 starting
+2024-08-17T16:32:47.943742+00:00 ip-10-0-0-70 dhcpcd[444]: DUID 00:01:00:01:2e:46:81:8b:0a:a4:60:14:24:11
+2024-08-17T16:32:47.943746+00:00 ip-10-0-0-70 dhcpcd[444]: ens5: IAID 60:14:24:11
+2024-08-17T16:32:47.943751+00:00 ip-10-0-0-70 dhcpcd[444]: ens5: soliciting a DHCP lease
+2024-08-17T16:32:47.946178+00:00 ip-10-0-0-70 dhcpcd[444]: ens5: offered 10.0.0.70 from 10.0.0.1
+2024-08-17T16:32:47.946188+00:00 ip-10-0-0-70 dhcpcd[444]: ens5: leased 10.0.0.70 for 3600 seconds
+2024-08-17T16:32:47.946193+00:00 ip-10-0-0-70 dhcpcd[444]: ens5: adding route to 10.0.0.0/24
+2024-08-17T16:32:47.946198+00:00 ip-10-0-0-70 dhcpcd[444]: ens5: adding default route via 10.0.0.1
+2024-08-17T16:32:47.946203+00:00 ip-10-0-0-70 dhcpcd[444]: control command: /usr/sbin/dhcpcd --dumplease --ipv4only ens5
+2024-08-17T16:32:47.946295+00:00 ip-10-0-0-70 systemd-networkd[463]: ens5: DHCPv4 address 10.0.0.70/24, gateway 10.0.0.1 acquired from 10.0.0.1
 
 
 
 Public to private num of hops
 -------------------
-<answer-here>
+0 hops, private instance is not connected to the internet.
 
 
 DNS queries from the private instance
 -------------------
-<answer-here>
+A private server can accurately resolve the DNS address of a public site if DNS resolvers and network
+access methods, such as NAT gateways, are correctly set up.
+This involves dispatching DNS requests, potentially passing through several resolvers,
+and obtaining the required IP addresses to connect to external websites.
