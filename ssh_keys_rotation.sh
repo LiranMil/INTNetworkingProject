@@ -53,3 +53,4 @@ echo "Key rotation successful. New key is now in place."
 # Step 7:
 export KEY_PATH="$OLD_KEY_PATH"
 echo "KEY_PATH updated to use the new key."
+
