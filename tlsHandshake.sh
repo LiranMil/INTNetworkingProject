@@ -54,14 +54,13 @@ openssl rand -base64 32 > "$MASTER_KEY_FILE"
 MASTER_KEY=$(cat "$MASTER_KEY_FILE")
 echo "Generated Master Key: $MASTER_KEY"
 
-# Encrypt the master key using the server certificate
-openssl smime -encrypt -aes-256-cbc -in "$MASTER_KEY_FILE" -out "$ENCRYPTED_MASTER_KEY_FILE" "$CERT_FILE" > /dev/null 2>&1
+# Encrypt the master key using the server's public key
+openssl rsautl -encrypt -inkey "$CERT_FILE" -pubin -in "$MASTER_KEY_FILE" -out "$ENCRYPTED_MASTER_KEY_FILE"
 if [ $? -ne 0 ]; then
     echo "Failed to encrypt the master key."
     rm "$CERT_FILE" "$CA_CERT_FILE" "$MASTER_KEY_FILE"
     exit 1
 fi
-
 ENCRYPTED_MASTER_KEY=$(cat "$ENCRYPTED_MASTER_KEY_FILE" | base64 -w 0)
 
 # Step 5: Send Key Exchange
