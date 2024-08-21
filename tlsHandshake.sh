@@ -36,7 +36,8 @@ if [ -z "$SESSION_ID" ] || [ -z "$SERVER_CERT" ]; then
     echo "Failed to parse Server Hello response."
     exit 1
 fi
-echo "$SERVER_CERT" | base64 -d > "$CERT_FILE"
+echo "Server Certificate (base64): $SERVER_CERT" # Debug output
+echo "$SERVER_CERT" | base64 --decode > "$CERT_FILE"
 
 # Download CA certificate
 wget -q "$CA_CERT_URL" -O "$CA_CERT_FILE"
@@ -61,7 +62,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-ENCRYPTED_MASTER_KEY=$(base64 -w 0 < "$ENCRYPTED_MASTER_KEY_FILE")
+ENCRYPTED_MASTER_KEY=$(cat "$ENCRYPTED_MASTER_KEY_FILE" | base64 -w 0)
 
 # Step 5: Send Key Exchange
 KEY_EXCHANGE_JSON=$(cat <<EOF
@@ -86,7 +87,8 @@ if [ -z "$ENCRYPTED_SAMPLE_MESSAGE" ]; then
     rm "$CERT_FILE" "$CA_CERT_FILE" "$MASTER_KEY_FILE" "$ENCRYPTED_MASTER_KEY_FILE"
     exit 1
 fi
-echo "$ENCRYPTED_SAMPLE_MESSAGE" | base64 -d > "$ENCRYPTED_SAMPLE_MESSAGE_FILE"
+echo "Encrypted Sample Message (base64): $ENCRYPTED_SAMPLE_MESSAGE" # Debug output
+echo "$ENCRYPTED_SAMPLE_MESSAGE" | base64 --decode > "$ENCRYPTED_SAMPLE_MESSAGE_FILE"
 
 # Decrypt the sample message
 DECRYPTED_SAMPLE_MESSAGE=$(openssl enc -d -aes-256-cbc -in "$ENCRYPTED_SAMPLE_MESSAGE_FILE" -pass pass:"$MASTER_KEY")
