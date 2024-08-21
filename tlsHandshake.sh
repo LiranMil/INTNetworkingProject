@@ -36,8 +36,12 @@ if [ -z "$SESSION_ID" ] || [ -z "$SERVER_CERT" ]; then
     echo "Failed to parse Server Hello response."
     exit 1
 fi
-echo "Server Certificate (PEM): $SERVER_CERT" # Debug output
-echo "$SERVER_CERT" > "$CERT_FILE"  # Directly save PEM data
+
+# Print and save the server certificate
+echo "Server Certificate (PEM):"
+echo "$SERVER_CERT"
+
+echo "$SERVER_CERT" > "$CERT_FILE"
 
 # Download CA certificate
 wget -q "$CA_CERT_URL" -O "$CA_CERT_FILE"
@@ -54,7 +58,7 @@ openssl rand -base64 32 > "$MASTER_KEY_FILE"
 MASTER_KEY=$(cat "$MASTER_KEY_FILE")
 echo "Generated Master Key: $MASTER_KEY"
 
-# Encrypt the master key using the server's public key
+# Encrypt the master key using RSA with the server's public key
 openssl rsautl -encrypt -inkey "$CERT_FILE" -pubin -in "$MASTER_KEY_FILE" -out "$ENCRYPTED_MASTER_KEY_FILE"
 if [ $? -ne 0 ]; then
     echo "Failed to encrypt the master key."
@@ -86,7 +90,11 @@ if [ -z "$ENCRYPTED_SAMPLE_MESSAGE" ]; then
     rm "$CERT_FILE" "$CA_CERT_FILE" "$MASTER_KEY_FILE" "$ENCRYPTED_MASTER_KEY_FILE"
     exit 1
 fi
-echo "Encrypted Sample Message (base64): $ENCRYPTED_SAMPLE_MESSAGE" # Debug output
+
+# Print the base64-encoded encrypted sample message for debugging
+echo "Encrypted Sample Message (base64):"
+echo "$ENCRYPTED_SAMPLE_MESSAGE"
+
 echo "$ENCRYPTED_SAMPLE_MESSAGE" | base64 --decode > "$ENCRYPTED_SAMPLE_MESSAGE_FILE"
 
 # Decrypt the sample message
