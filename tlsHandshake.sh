@@ -36,8 +36,8 @@ if [ -z "$SESSION_ID" ] || [ -z "$SERVER_CERT" ]; then
     echo "Failed to parse Server Hello response."
     exit 1
 fi
-echo "Server Certificate (base64): $SERVER_CERT" # Debug output
-echo "$SERVER_CERT" | base64 --decode > "$CERT_FILE"
+echo "Server Certificate (PEM): $SERVER_CERT" # Debug output
+echo "$SERVER_CERT" > "$CERT_FILE"  # Directly save PEM data
 
 # Download CA certificate
 wget -q "$CA_CERT_URL" -O "$CA_CERT_FILE"
