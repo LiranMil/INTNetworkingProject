@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Check for server IP argument
 if [ -z "$1" ]; then
     echo "Usage: $0 <server-ip>"
     exit 1
@@ -22,14 +21,12 @@ MASTER_KEY_FILE="master_key.txt"
 ENCRYPTED_MASTER_KEY_FILE="encrypted_master_key.b64"
 ENCRYPTED_SAMPLE_MESSAGE_FILE="encrypted_sample_message.der"
 
-# Step 1: Send Client Hello
 response=$(curl -s -X POST -H "Content-Type: application/json" -d "$CLIENT_HELLO_JSON" http://$SERVER_IP:8080/clienthello)
 if [ $? -ne 0 ] || [ -z "$response" ]; then
     echo "Failed to send Client Hello."
     exit 1
 fi
 
-# Step 2: Handle Server Hello
 SESSION_ID=$(echo "$response" | jq -r '.sessionID')
 SERVER_CERT=$(echo "$response" | jq -r '.serverCert')
 if [ -z "$SESSION_ID" ] || [ -z "$SERVER_CERT" ]; then
@@ -37,29 +34,33 @@ if [ -z "$SESSION_ID" ] || [ -z "$SERVER_CERT" ]; then
     exit 1
 fi
 
-# Print and save the server certificate
 echo "Server Certificate (PEM):"
 echo "$SERVER_CERT"
 
 echo "$SERVER_CERT" > "$CERT_FILE"
 
-# Download CA certificate
-wget -q "$CA_CERT_URL" -O "$CA_CERT_FILE"
+if [ ! -f "$CA_CERT_FILE" ]; then
+    echo "Downloading CA certificate..."
+    wget -q "$CA_CERT_URL" -O "$CA_CERT_FILE"
+    if [ $? -ne 0 ]; then
+        echo "Failed to download CA certificate."
+        exit 5
+    fi
+fi
 
-# Step 3: Verify Server Certificate
 if ! openssl verify -CAfile "$CA_CERT_FILE" "$CERT_FILE" > /dev/null 2>&1; then
     echo "Server Certificate is invalid."
     rm "$CERT_FILE" "$CA_CERT_FILE"
     exit 5
 fi
 
-# Step 4: Generate and Encrypt Master Key
+echo "Generating a random master key..."
 openssl rand -base64 32 > "$MASTER_KEY_FILE"
 MASTER_KEY=$(cat "$MASTER_KEY_FILE")
 echo "Generated Master Key: $MASTER_KEY"
 
-# Encrypt the master key using RSA with the server's public key
-openssl rsautl -encrypt -inkey "$CERT_FILE" -pubin -in "$MASTER_KEY_FILE" -out "$ENCRYPTED_MASTER_KEY_FILE"
+echo "Encrypting the master key with the server certificate..."
+echo "$MASTER_KEY" | openssl rsautl -encrypt -inkey "$CERT_FILE" -pubin -out "$ENCRYPTED_MASTER_KEY_FILE"
 if [ $? -ne 0 ]; then
     echo "Failed to encrypt the master key."
     rm "$CERT_FILE" "$CA_CERT_FILE" "$MASTER_KEY_FILE"
@@ -67,7 +68,6 @@ if [ $? -ne 0 ]; then
 fi
 ENCRYPTED_MASTER_KEY=$(cat "$ENCRYPTED_MASTER_KEY_FILE" | base64 -w 0)
 
-# Step 5: Send Key Exchange
 KEY_EXCHANGE_JSON=$(cat <<EOF
 {
     "sessionID": "$SESSION_ID",
@@ -83,21 +83,18 @@ if [ $? -ne 0 ] || [ -z "$response" ]; then
     exit 1
 fi
 
-# Step 6: Handle Server Response
 ENCRYPTED_SAMPLE_MESSAGE=$(echo "$response" | jq -r '.encryptedSampleMessage')
 if [ -z "$ENCRYPTED_SAMPLE_MESSAGE" ]; then
-    echo "Failed to parse Key Exchange response."
+    echo "Failed to retrieve encryptedSampleMessage from the response."
     rm "$CERT_FILE" "$CA_CERT_FILE" "$MASTER_KEY_FILE" "$ENCRYPTED_MASTER_KEY_FILE"
     exit 1
 fi
 
-# Print the base64-encoded encrypted sample message for debugging
 echo "Encrypted Sample Message (base64):"
 echo "$ENCRYPTED_SAMPLE_MESSAGE"
 
 echo "$ENCRYPTED_SAMPLE_MESSAGE" | base64 --decode > "$ENCRYPTED_SAMPLE_MESSAGE_FILE"
 
-# Decrypt the sample message
 DECRYPTED_SAMPLE_MESSAGE=$(openssl enc -d -aes-256-cbc -in "$ENCRYPTED_SAMPLE_MESSAGE_FILE" -pass pass:"$MASTER_KEY")
 if [ "$DECRYPTED_SAMPLE_MESSAGE" != "Hi server, please encrypt me and send to client!" ]; then
     echo "Server symmetric encryption using the exchanged master-key has failed."
@@ -105,8 +102,6 @@ if [ "$DECRYPTED_SAMPLE_MESSAGE" != "Hi server, please encrypt me and send to cl
     exit 6
 fi
 
-# Success
 echo "Client-Server TLS handshake has been completed successfully"
 
-# Cleanup
 rm "$CERT_FILE" "$CA_CERT_FILE" "$MASTER_KEY_FILE" "$ENCRYPTED_MASTER_KEY_FILE" "$ENCRYPTED_SAMPLE_MESSAGE_FILE"
