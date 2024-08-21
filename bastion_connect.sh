@@ -15,8 +15,8 @@ PUBLIC_IP=$1
 PRIVATE_IP=$2
 COMMAND=$3
 
-if [ -z "$PRIVATE_IP" ]; then
 
+if [ -z "$PRIVATE_IP" ]; then
     ssh -i "$KEY_PATH" ubuntu@"$PUBLIC_IP"
 else
     if [ -z "$COMMAND" ]; then
