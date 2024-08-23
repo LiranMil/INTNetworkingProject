@@ -21,10 +21,10 @@ COMMAND=$3
 LOCAL_KEY_PATH=/home/liranmilman/Downloads/lmkey.pem
 PUBLIC_KEY_PATH=/home/ubuntu/lmkey.pem
 
-if [ ! -f "$LOCAL_KEY_PATH" ] || [ ! -f "$PUBLIC_KEY_PATH" ]; then
-    echo "Key file(s) not found."
-    exit 2
-fi
+#if [ ! -f "$LOCAL_KEY_PATH" ] || [ ! -f "$PUBLIC_KEY_PATH" ]; then
+#    echo "Key file(s) not found."
+#    exit 2
+#fi
 
 # Debugging output
 echo "Using local key file: $LOCAL_KEY_PATH"
