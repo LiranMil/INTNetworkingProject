@@ -18,7 +18,7 @@ PRIVATE_IP=$2
 COMMAND=$3
 
 # Check if the key files exist
-LOCAL_KEY_PATH=~/Downloads/lmkey.pem
+LOCAL_KEY_PATH=/home/liranmilman/Downloads/lmkey.pem
 PUBLIC_KEY_PATH=/home/ubuntu/lmkey.pem
 
 if [ ! -f "$LOCAL_KEY_PATH" ] || [ ! -f "$PUBLIC_KEY_PATH" ]; then
