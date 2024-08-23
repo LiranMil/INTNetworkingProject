@@ -36,11 +36,19 @@ if [ -z "$SESSION_ID" ] || [ -z "$SERVER_CERT" ]; then
     echo "Failed to parse Server Hello response."
     exit 1
 fi
-echo "Server Certificate (PEM): $SERVER_CERT" # Debug output
-echo "$SERVER_CERT" > "$CERT_FILE"  # Directly save PEM data
+echo "Server Certificate (PEM): $SERVER_CERT"
+echo "$SERVER_CERT" > "$CERT_FILE"
+cat "$CERT_FILE"  # Debug output
 
 # Download CA certificate
 wget -q "$CA_CERT_URL" -O "$CA_CERT_FILE"
+
+# Verify CA certificate
+openssl x509 -in "$CA_CERT_FILE" -text -noout
+if [ $? -ne 0 ]; then
+    echo "Failed to read CA certificate."
+    exit 1
+fi
 
 # Step 3: Verify Server Certificate
 if ! openssl verify -CAfile "$CA_CERT_FILE" "$CERT_FILE" > /dev/null 2>&1; then
@@ -87,7 +95,7 @@ if [ -z "$ENCRYPTED_SAMPLE_MESSAGE" ]; then
     rm "$CERT_FILE" "$CA_CERT_FILE" "$MASTER_KEY_FILE" "$ENCRYPTED_MASTER_KEY_FILE"
     exit 1
 fi
-echo "Encrypted Sample Message (base64): $ENCRYPTED_SAMPLE_MESSAGE" # Debug output
+echo "Encrypted Sample Message (base64): $ENCRYPTED_SAMPLE_MESSAGE"
 echo "$ENCRYPTED_SAMPLE_MESSAGE" | base64 --decode > "$ENCRYPTED_SAMPLE_MESSAGE_FILE"
 
 # Decrypt the sample message
