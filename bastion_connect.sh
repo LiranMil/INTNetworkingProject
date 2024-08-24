@@ -6,7 +6,7 @@ if [ -z "$KEY_PATH" ]; then
     exit 5
 fi
 
-# Ensure at least the public IP is provided
+#  Ensure at least the public IP is provided
 if [ $# -lt 1 ]; then
     echo "Usage: $0 <public-ip> [private-ip] [command]"
     exit 5
