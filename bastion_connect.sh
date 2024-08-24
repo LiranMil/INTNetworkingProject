@@ -19,7 +19,7 @@ COMMAND=$3
 
 # Check if the key files exist
 LOCAL_KEY_PATH=/home/liranmilman/Downloads/lmkey.pem
-PUBLIC_KEY_PATH=/home/ubuntu/id_rsa
+PUBLIC_KEY_PATH=/home/ubuntu/key.pem
 
 #if [ ! -f "$LOCAL_KEY_PATH" ] || [ ! -f "$PUBLIC_KEY_PATH" ]; then
 #    echo "Key file(s) not found."
