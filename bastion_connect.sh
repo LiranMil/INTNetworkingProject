@@ -17,7 +17,6 @@ PUBLIC_IP=$1
 PRIVATE_IP=$2
 COMMAND=$3
 
-
 # Debugging output
 echo "Using SSH key: $KEY_PATH"
 echo "Connecting to public instance: $PUBLIC_IP"
