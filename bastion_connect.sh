@@ -32,9 +32,9 @@ else
     # Private IP provided; connect to the private instance via the public instance
     if [ -z "$COMMAND" ]; then
         # No command provided; open an interactive SSH session to the private instance
-        ssh -i "$KEY_PATH" -t ubuntu@"$PUBLIC_IP" ssh -i /home/ubuntu/.ssh/id_rsa ubuntu@"$PRIVATE_IP"
+        ssh -i "$KEY_PATH" -t ubuntu@"$PUBLIC_IP" ssh -i "$KEY_PATH" ubuntu@"$PRIVATE_IP"
     else
         # Command provided; execute the command on the private instance
-        ssh -i "$KEY_PATH" -t ubuntu@"$PUBLIC_IP" ssh -i /home/ubuntu/.ssh/id_rsa ubuntu@"$PRIVATE_IP" "$COMMAND"
+        ssh -i "$KEY_PATH" -t ubuntu@"$PUBLIC_IP" ssh -i "$KEY_PATH" ubuntu@"$PRIVATE_IP" "$COMMAND"
     fi
 fi
