@@ -10,7 +10,13 @@ PRIVATE_IP="$1"
 NEW_KEY_PATH="/home/ubuntu/new_ssh_key"
 OLD_KEY_PATH="/home/ubuntu/old_ssh_key"
 
-# Step 1: Generate a new SSH key pair
+# Step 1: Generate a new SSH key pair, handle existing key
+if [ -f "$NEW_KEY_PATH" ]; then
+    echo "Warning: $NEW_KEY_PATH already exists. Removing it."
+    rm -f "$NEW_KEY_PATH"
+    rm -f "${NEW_KEY_PATH}.pub"
+fi
+
 ssh-keygen -t rsa -b 2048 -f "$NEW_KEY_PATH" -N ""
 if [ $? -ne 0 ]; then
     echo "Error: Failed to generate a new SSH key."
