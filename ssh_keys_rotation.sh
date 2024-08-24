@@ -7,54 +7,51 @@ if [ "$#" -ne 1 ]; then
 fi
 
 PRIVATE_IP="$1"
-NEW_KEY_PATH="/home/ubuntu/new_ssh_key"
-OLD_KEY_PATH="/home/ubuntu/old_ssh_key"
 
-# Step 1: Generate a new SSH key pair, handle existing key
-if [ -f "$NEW_KEY_PATH" ]; then
-    echo "Warning: $NEW_KEY_PATH already exists. Removing it."
-    rm -f "$NEW_KEY_PATH"
-    rm -f "${NEW_KEY_PATH}.pub"
-fi
+# Define paths
+PRIVATE_KEY_PATH="$HOME/.ssh/id_rsa"
+PUBLIC_KEY_PATH="$PRIVATE_KEY_PATH.pub"
+OLD_PRIVATE_KEY_PATH="$PRIVATE_KEY_PATH.old"
+OLD_KEY_PATH_PUB="$PUBLIC_KEY_PATH.old"
 
-ssh-keygen -t rsa -b 2048 -f "$NEW_KEY_PATH" -N ""
-if [ $? -ne 0 ]; then
-    echo "Error: Failed to generate a new SSH key."
+# Move old key to a backup location
+if [ -f "$PRIVATE_KEY_PATH" ]; then
+    mv "$PRIVATE_KEY_PATH" "$OLD_PRIVATE_KEY_PATH"
+else
+    echo "Old private key not found at $PRIVATE_KEY_PATH"
     exit 1
 fi
 
-# Set permissions
-chmod 400 "$NEW_KEY_PATH"
-chmod 400 "${NEW_KEY_PATH}.pub"
-
-# Step 2: Add the new public key to the private instance
-ssh -i "$OLD_KEY_PATH" ubuntu@"$PRIVATE_IP" "echo '$(cat ${NEW_KEY_PATH}.pub)' >> ~/.ssh/authorized_keys"
-if [ $? -ne 0 ]; then
-    echo "Error: Failed to copy the new SSH key to the private instance."
+if [ -f "$PUBLIC_KEY_PATH" ]; then
+    mv "$PUBLIC_KEY_PATH" "$OLD_KEY_PATH_PUB"
+else
+    echo "Old public key not found at $PUBLIC_KEY_PATH"
     exit 1
 fi
 
-# Step 3: Remove the old key from the private instance
-OLD_KEY_CONTENT=$(cat "${OLD_KEY_PATH}.pub")
-ssh -i "$OLD_KEY_PATH" ubuntu@"$PRIVATE_IP" "sed -i '/${OLD_KEY_CONTENT//\//\\/}/d' ~/.ssh/authorized_keys"
-if [ $? -ne 0 ]; then
-    echo "Error: Failed to remove the old SSH key from the private instance."
+# Generate a new SSH key pair
+ssh-keygen -t rsa -b 4096 -f "$PRIVATE_KEY_PATH" -N "" -C "Key rotated on $(date)" > /dev/null
+chmod 400 "$PRIVATE_KEY_PATH"
+
+# Ensure the new public key file exists
+if [ ! -f "$PUBLIC_KEY_PATH" ]; then
+    echo "Failed to generate new public key at $PUBLIC_KEY_PATH"
     exit 1
 fi
 
-# Step 4: Test the new key
-ssh -i "$NEW_KEY_PATH" ubuntu@"$PRIVATE_IP" "exit"
-if [ $? -ne 0 ]; then
-    echo "Error: Failed to connect to the private instance with the new SSH key."
+# Copy the new public key to the private instance
+if ! ssh -i "$OLD_PRIVATE_KEY_PATH" ubuntu@"$PRIVATE_IP" "cat > ~/.ssh/authorized_keys" < "$PUBLIC_KEY_PATH"; then
+    echo "Failed to copy public key to the private machine"
     exit 1
 fi
 
-# Step 5: Replace the old key with the new key
-cp "$OLD_KEY_PATH" "${OLD_KEY_PATH}.backup"
-mv "$NEW_KEY_PATH" "$OLD_KEY_PATH"
-mv "${NEW_KEY_PATH}.pub" "${OLD_KEY_PATH}.pub"
-echo "Key rotation successful. New key is now in place."
+# Test SSH connection with the new key
+echo "Testing SSH connection with the new key..."
+if ssh -o StrictHostKeyChecking=no -i "$PRIVATE_KEY_PATH" ubuntu@"$PRIVATE_IP" "exit"; then
+    echo "SSH connection successful with the new key."
+else
+    echo "SSH connection failed with the new key."
+    exit 1
+fi
 
-# Step 6: Update KEY_PATH environment variable
-export KEY_PATH="$OLD_KEY_PATH"
-echo "KEY_PATH updated to use the new key."
+echo "Key rotation completed successfully."
