@@ -12,14 +12,12 @@ NEW_KEY_PATH="$HOME/.ssh/id_rsa_new"
 PUBLIC_KEY_PATH="$NEW_KEY_PATH.pub"
 OLD_KEY_PATH="$HOME/.ssh/id_rsa"
 
-
 # Generate a new SSH key pair
 ssh-keygen -t rsa -b 4096 -f $NEW_KEY_PATH -N ""
 chmod 600 $NEW_KEY_PATH
 
 # Copy the new public key to the authorized_keys on the private instance
 NEW_PUBLIC_KEY=$(cat $PUBLIC_KEY_PATH)
-echo "new_public_process"
 ssh -i "$OLD_KEY_PATH" ubuntu@$PRIVATE_IP "echo '$NEW_PUBLIC_KEY' >> ~/.ssh/authorized_keys"
 
 # Verify the new key works
@@ -48,6 +46,5 @@ rm -f $OLD_KEY_PATH $OLD_KEY_PATH.pub
 # Replace the old key with the new key locally
 mv $NEW_KEY_PATH $HOME/.ssh/id_rsa
 mv $PUBLIC_KEY_PATH $HOME/.ssh/id_rsa.pub
-
 
 echo "SSH key rotation completed successfully."

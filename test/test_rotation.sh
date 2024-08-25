@@ -25,12 +25,12 @@ echo -e "-----------------------------------------------------------------------
 
 echo $NEW_KEYS
 
-:'while read -r old_key; do
+while read -r old_key; do
     if echo "$NEW_KEYS" | grep -qF "$old_key"; then
         echo "Some key that existed before rotation are still present after rotation."
         exit 1
     fi
-    '
+
 done <<< "$OLD_KEYS"
 
 echo '✅ Rotation done successfully!'
