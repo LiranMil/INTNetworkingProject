@@ -10,7 +10,7 @@ fi
 PRIVATE_IP=$1
 NEW_KEY_PATH="$HOME/.ssh/id_rsa_new"
 PUBLIC_KEY_PATH="$NEW_KEY_PATH.pub"
-OLD_KEY_PATH="$HOME/lmkey.pem"
+OLD_KEY_PATH="$HOME/.ssh/id_rsa"
 
 
 # Generate a new SSH key pair
