@@ -14,6 +14,11 @@ OLD_KEY_PATH="$HOME/.ssh/id_rsa"
 
 # Generate a new SSH key pair
 echo "Generating new SSH key pair..."
+if [ -f "$NEW_KEY_PATH" ] || [ -f "$PUBLIC_KEY_PATH" ]; then
+  echo "New key files already exist. Removing them before generating new keys."
+  rm -f "$NEW_KEY_PATH" "$PUBLIC_KEY_PATH"
+fi
+
 ssh-keygen -t rsa -b 4096 -f "$NEW_KEY_PATH" -N ""
 chmod 600 "$NEW_KEY_PATH"
 
