@@ -44,4 +44,3 @@ echo "$OLD_KEY_PATH"
 echo "Key rotation successful. You can now use the new key to access the private instance."
 rm -f "$OLD_KEY_PATH" "$OLD_KEY_PATH_PUB"
 
-#
