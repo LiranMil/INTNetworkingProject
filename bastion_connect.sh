@@ -1,41 +1,37 @@
 #!/bin/bash
-$key2="/home/ubuntu/lmkey.pem"
+# Assign arguments to variables
+bsto="$1"
+rem="$2"
+cmd="$3"
+remkey="/home/ubuntu/lmkey.pem"
 
-# Check if KEY_PATH environment variable is set
+# Check if KEY_PATH is set
 if [ -z "$KEY_PATH" ]; then
-    echo "KEY_PATH environment variable is missing."
+    echo "KEY_PATH env var is expected."
     exit 5
 fi
 
-# Ensure at least the public IP is provided
-if [ $# -lt 1 ]; then
-    echo "Usage: $0 <public-ip> [private-ip] [command]"
-    exit 5
+# Check if correct number of arguments is provided
+if [ "$#" -lt 1 ]; then
+    echo "Usage: $0 <public-instance-ip> <private-instance-ip>"
+    exit 1
 fi
 
-# Define variables
-PUBLIC_IP=$1
-PRIVATE_IP=$2
-COMMAND=$3
-
-# Debugging output
-echo "Using SSH key: $KEY_PATH"
-echo "Connecting to public instance: $PUBLIC_IP"
-if [ -n "$PRIVATE_IP" ]; then
-    echo "Connecting to private instance: $PRIVATE_IP"
+# Case 1: Connect to the private instance via the public instance
+if [ "$#" -eq 2 ]; then
+    echo "Connecting to the private instance via the public instance..."
+    ssh -t -i "$KEY_PATH" ubuntu@$bsto ssh -i $remkey ubuntu@$rem
+# Case 2: Connect directly to the public instance
+elif [ "$#" -eq 1 ]; then
+    echo "Connecting directly to the public instance..."
+    ssh -i "$KEY_PATH" ubuntu@$bsto
+fi
+# case 3: run command in the private machine
+if [ "$#" -eq 3 ]; then
+  echo "Command accepted,"
+      #ssh -i "$KEY_PATH" -o ProxyCommand="ssh -W %h:%p -i $KEY_PATH ubuntu@$bsto" ubuntu@$rem "$cmd"
+      ssh -t -i $KEY_PATH ubuntu@$bsto ssh -i "$remkey" ubuntu@$rem "$cmd"
+      else
+        exit 1
 fi
 
-# Handle connections based on provided arguments
-if [ -z "$PRIVATE_IP" ]; then
-    # No private IP provided; connect to the public instance only
-    ssh -i "$KEY_PATH" ubuntu@"$PUBLIC_IP"
-else
-    # Private IP provided; connect to the private instance via the public instance
-    if [ -z "$COMMAND" ]; then
-        # No command provided; open an interactive SSH session to the private instance
-        ssh -i "$KEY_PATH" -t ubuntu@"$PUBLIC_IP" ssh -i "$KEY_PATH" ubuntu@"$PRIVATE_IP"
-    else
-        # Command provided; execute the command on the private instance
-        ssh -i "$KEY_PATH" -t ubuntu@"$PUBLIC_IP" ssh -i "$KEY_PATH" ubuntu@"$PRIVATE_IP" "$COMMAND"
-    fi
-fi
