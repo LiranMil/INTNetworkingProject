@@ -1,3 +1,4 @@
+<<comment
 #!/bin/bash
 
 # Ensure correct usage
@@ -32,9 +33,8 @@ fi
 
 # Remove the old key from authorized_keys on the private instance
 OLD_PUBLIC_KEY=$(cat $OLD_KEY_PATH.pub)
-ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP "grep -vF \"$OLD_PUBLIC_KEY\" ~/.ssh/authorized_keys > ~/.ssh/authorized_keys.tmp && mv ~/.ssh/authorized_keys.tmp ~/.ssh/authorized_keys"
-#ESCAPED_OLD_KEY=$(echo "$OLD_PUBLIC_KEY" | sed 's/[\/&]/\\&/g')
-#ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP "sed -i '/$ESCAPED_OLD_KEY/d' ~/.ssh/authorized_keys"
+ESCAPED_OLD_KEY=$(echo "$OLD_PUBLIC_KEY" | sed 's/[\/&]/\\&/g')
+ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP "sed -i '/$ESCAPED_OLD_KEY/d' ~/.ssh/authorized_keys"
 #ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP "grep -v '$OLD_PUBLIC_KEY' ~/.ssh/authorized_keys > ~/.ssh/authorized_keys.tmp && mv ~/.ssh/authorized_keys.tmp ~/.ssh/authorized_keys"
 
 # Verify the old key no longer works
@@ -46,10 +46,28 @@ fi
 
 # Remove old key from the public instance
 rm -f $OLD_KEY_PATH $OLD_KEY_PATH.pub
-ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP "cat ~/.ssh/authorized_keys"
 
 # Replace the old key with the new key locally
 mv $NEW_KEY_PATH $HOME/.ssh/id_rsa
 mv $PUBLIC_KEY_PATH $HOME/.ssh/id_rsa.pub
 
 echo "SSH key rotation completed successfully."
+comment
+#!/bin/bash
+
+#Rotates the keys of the private instance
+CURRENT_KEY_PATH="/home/ubuntu/.ssh/id_rsa"
+ROLLED_KEY_PATH="/home/ubuntu/.ssh/id_rsa_new"
+private_server_ip=${1}
+
+if [[ -z private_server_ip ]]
+then
+  echo "Error : Private server ip unspecified."
+  exit 1
+else
+  #Create new keyfile, overriding the previous one, redirecting output to /dev/null
+  ssh-keygen -q -f ${ROLLED_KEY_PATH} -N "" -t rsa <<< y > /dev/null
+  scp -q -i ${CURRENT_KEY_PATH} "${ROLLED_KEY_PATH}.pub" ubuntu@${private_server_ip}:"${ROLLED_KEY_PATH}.pub" #Copy new public key to private instance
+  ssh -i ${CURRENT_KEY_PATH} ubuntu@${private_server_ip} "cat ${ROLLED_KEY_PATH}.pub > ~/.ssh/authorized_keys" #Perform key rotation in public instance. ssh session will be disconnected.
+  cp ${ROLLED_KEY_PATH} ${CURRENT_KEY_PATH} #We're back to the public instance. Set current key to the rolled key.
+fi
