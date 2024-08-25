@@ -91,3 +91,4 @@ chmod 600 "$HOME/.ssh/id_rsa"
 chmod 644 "$HOME/.ssh/id_rsa.pub"
 
 echo "SSH key rotation completed successfully."
+
