@@ -6,6 +6,7 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
+
 # Variables
 PRIVATE_IP=$1
 NEW_KEY_PATH="$HOME/.ssh/id_rsa_new"
