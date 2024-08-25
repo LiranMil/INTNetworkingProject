@@ -1,40 +1,45 @@
 #!/bin/bash
 
-# Check if KEY_PATH environment variable is set
-if [ -z "$KEY_PATH" ]; then
-    echo "KEY_PATH environment variable is missing."
-    exit 5
+if [ -z "$1" ]; then
+   echo "please provide private-instance-ip"
+   exit 1
 fi
 
-# Ensure at least the public IP is provided
-if [ $# -lt 1 ]; then
-    echo "Usage: $0 <public-ip> [private-ip] [command]"
-    exit 5
-fi
+PRIVATE_INSTANCE_IP="$1"
+NEW_KEY_NAME="id_rsa"
+NEW_KEY_PATH="$HOME/.ssh/$NEW_KEY_NAME"
+OLD_KEY_PATH="$NEW_KEY_PATH"
+mv "$OLD_KEY_PATH" "$OLD_KEY_PATH".old
+OLD_KEY_PATH="$OLD_KEY_PATH".old
+OLD_KEY_PATH_PUB="$HOME/.ssh/$NEW_KEY_NAME.pub"
+echo "$OLD_KEY_PATH_PUB"
+mv "$OLD_KEY_PATH_PUB" "$OLD_KEY_PATH_PUB".old
+OLD_KEY_PATH_PUB="$OLD_KEY_PATH_PUB".old
+echo "$OLD_KEY_PATH_PUB"
 
-# Define variables
-PUBLIC_IP=$1
-PRIVATE_IP=$2
-COMMAND=$3
-
-# Debugging output
-echo "Using SSH key: $KEY_PATH"
-echo "Connecting to public instance: $PUBLIC_IP"
-if [ -n "$PRIVATE_IP" ]; then
-    echo "Connecting to private instance: $PRIVATE_IP"
+if ! ssh-keygen -t rsa -b 2048 -f "$NEW_KEY_PATH" -N ""; then
+   echo "Failed to generate SSH key"
+   exit 1
 fi
-
-# Handle connections based on provided arguments
-if [ -z "$PRIVATE_IP" ]; then
-    # No private IP provided; connect to the public instance only
-    ssh -i "$KEY_PATH" ubuntu@"$PUBLIC_IP"
-else
-    # Private IP provided; connect to the private instance via the public instance
-    if [ -z "$COMMAND" ]; then
-        # No command provided; open an interactive SSH session to the private instance
-        ssh -i "$KEY_PATH" -t ubuntu@"$PUBLIC_IP" ssh -i "$KEY_PATH" ubuntu@"$PRIVATE_IP"
-    else
-        # Command provided; execute the command on the private instance
-        ssh -i "$KEY_PATH" -t ubuntu@"$PUBLIC_IP" ssh -i "$KEY_PATH" ubuntu@"$PRIVATE_IP" "$COMMAND"
-    fi
+echo "$NEW_KEY_PATH"
+if ! sudo chmod 400 "$NEW_KEY_PATH"; then
+   echo "Failed to set permissions on the key"
+   exit 1
 fi
+echo "$OLD_KEY_PATH"
+echo "$NEW_KEY_PATH"
+
+if ! ssh -i "$OLD_KEY_PATH" "ubuntu@$PRIVATE_INSTANCE_IP" "cat > ~/.ssh/authorized_keys" < "$NEW_KEY_PATH.pub"; then
+   echo "Failed to copy key to the private machine"
+   exit 1
+fi
+echo "Testing SSH connection with the new key..."
+if ! ssh -i "$NEW_KEY_PATH" "ubuntu@$PRIVATE_INSTANCE_IP" -o StrictHostKeyChecking=no "echo 'Connection successful with new key'"; then
+    echo "Failed to connect with the new key"
+    exit 1
+fi
+echo "$NEW_KEY_PATH"
+echo "$OLD_KEY_PATH"
+
+echo "Key rotation successful. You can now use the new key to access the private instance."
+rm -f "$OLD_KEY_PATH" "$OLD_KEY_PATH_PUB"
