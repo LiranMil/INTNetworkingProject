@@ -1,47 +1,50 @@
 #!/bin/bash
 
-
-# Paths
-PRIVATE_IP=$1
-KEY_DIR="/home/ubuntu/.ssh"
-OLD_KEY="/home/ubuntu/old_key"
-NEW_KEY="${KEY_DIR}/id_rsa"
-NEW_KEY_PUB="${NEW_KEY}.pub"
-
-if [[ $# -eq 1 ]]; then
-	if [[ -f "${KEY_DIR}/id_rsa" ]]; then
-		cd /home/ubuntu/.ssh/
-		if [[ -f "${OLD_KEY}" ]]; then
-			cd /home/ubuntu
-			rm -f old_key
-		fi
-		mv "${KEY_DIR}/id_rsa" "${OLD_KEY}" #CHANGE THE NAME TO THE OLD KEY
-		rm  -f "${KEY_DIR}/id_rsa.pub"
-	fi
-
-	cd /home/ubuntu
-	#GENERATE SSH_KEY ON THE PUBLIC INSTANCE
-	ssh-keygen -t rsa -b 4096 -f /home/ubuntu/key_change -P "" -q
-	mv key_change "${NEW_KEY}"
-	mv key_change.pub "${NEW_KEY_PUB}"
-
-	#FORWARD PUBLIC KEY TO PRIVATE INSTANCE
-	scp -i  "${OLD_KEY}" "${NEW_KEY_PUB}" ubuntu@"${PRIVATE_IP}":/home/ubuntu
-
-	#APPEND THE NEW KEYS TO authorized_keys FILE.
-	ssh -i "${OLD_KEY}" ubuntu@"${PRIVATE_IP}" "cat id_rsa.pub >> .ssh/authorized_keys"
-
-	#CHCEK IF CAN I CONNECT TO THE MESHIN WITH THE NEW KEY
-	ssh -i "${NEW_KEY}" ubuntu@"${PRIVATE_IP}" "cat id_rsa.pub > .ssh/authorized_keys"
-	if [[ $? -eq 0 ]]; then
-		echo "Now you can connect to the private machine only with this key: ${NEW_KEY}"
-		rm /home/ubuntu/old_key
-		rm /home/ubuntu/.ssh/id_rsa.pub
-		ssh -i "${NEW_KEY}" ubuntu@"${PRIVATE_IP}" "rm /home/ubuntu/id_rsa.pub"
-	else
-		echo "The key you created is not good"
-	fi
-else
-	echo "Please insert the private ip of your instance"
-	exit 1
+# Ensure correct usage
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 <private-instance-ip>"
+  exit 1
 fi
+
+# Variables
+PRIVATE_IP=$1
+NEW_KEY_PATH="$HOME/.ssh/id_rsa_new"
+PUBLIC_KEY_PATH="$NEW_KEY_PATH.pub"
+OLD_KEY_PATH="$HOME/.ssh/id_rsa"
+
+# Generate a new SSH key pair
+ssh-keygen -t rsa -b 4096 -f $NEW_KEY_PATH -N ""
+chmod 600 $NEW_KEY_PATH
+
+# Copy the new public key to the authorized_keys on the private instance
+NEW_PUBLIC_KEY=$(cat $PUBLIC_KEY_PATH)
+ssh -i "$OLD_KEY_PATH" ubuntu@$PRIVATE_IP "echo '$NEW_PUBLIC_KEY' >> ~/.ssh/authorized_keys"
+
+# Verify the new key works
+ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP 'exit'
+if [ $? -ne 0 ]; then
+  echo "Failed to connect to the private instance using the new key."
+  exit 1
+fi
+
+# Remove the old key from authorized_keys on the private instance
+OLD_PUBLIC_KEY=$(cat $OLD_KEY_PATH.pub)
+ESCAPED_OLD_KEY=$(echo "$OLD_PUBLIC_KEY" | sed 's/[\/&]/\\&/g')
+ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP "sed -i '/$ESCAPED_OLD_KEY/d' ~/.ssh/authorized_keys"
+#ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP "grep -v '$OLD_PUBLIC_KEY' ~/.ssh/authorized_keys > ~/.ssh/authorized_keys.tmp && mv ~/.ssh/authorized_keys.tmp ~/.ssh/authorized_keys"
+
+# Verify the old key no longer works
+ssh -i "$OLD_KEY_PATH" ubuntu@$PRIVATE_IP 'exit'
+if [ $? -eq 0 ]; then
+  echo "Old key is still valid, which shouldn't be the case."
+  exit 1
+fi
+
+# Remove old key from the public instance
+rm -f $OLD_KEY_PATH $OLD_KEY_PATH.pub
+
+# Replace the old key with the new key locally
+mv $NEW_KEY_PATH $HOME/.ssh/id_rsa
+mv $PUBLIC_KEY_PATH $HOME/.ssh/id_rsa.pub
+
+echo "SSH key rotation completed successfully."
