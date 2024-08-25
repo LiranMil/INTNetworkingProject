@@ -12,13 +12,17 @@ NEW_KEY_PATH="$HOME/.ssh/id_rsa_new"
 PUBLIC_KEY_PATH="$NEW_KEY_PATH.pub"
 OLD_KEY_PATH="$HOME/.ssh/id_rsa"
 
+
 # Generate a new SSH key pair
 ssh-keygen -t rsa -b 4096 -f $NEW_KEY_PATH -N ""
+echo "chmod"
 chmod 600 $NEW_KEY_PATH
 
 # Copy the new public key to the authorized_keys on the private instance
 NEW_PUBLIC_KEY=$(cat $PUBLIC_KEY_PATH)
+echo "new_public_process"
 ssh -i "$OLD_KEY_PATH" ubuntu@$PRIVATE_IP "echo '$NEW_PUBLIC_KEY' >> ~/.ssh/authorized_keys"
+echo "ssh -i old key"
 
 # Verify the new key works
 ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP 'exit'
