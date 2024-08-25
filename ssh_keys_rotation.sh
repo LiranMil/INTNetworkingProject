@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Ensure correct usage
 if [ $# -ne 1 ]; then
   echo "Usage: $0 <private-instance-ip>"
@@ -38,6 +40,7 @@ if [ -z "$NEW_PUBLIC_KEY" ]; then
   exit 1
 fi
 
+# Add the new public key to authorized_keys on the private instance
 echo "Adding new public key to authorized_keys on the private instance..."
 ssh -i "$OLD_KEY_PATH" ubuntu@"$PRIVATE_IP" "echo '$NEW_PUBLIC_KEY' >> ~/.ssh/authorized_keys"
 if [ $? -ne 0 ]; then
@@ -84,5 +87,7 @@ rm -f "$OLD_KEY_PATH" "$OLD_KEY_PATH.pub"
 echo "Replacing old key with new key locally..."
 mv "$NEW_KEY_PATH" "$HOME/.ssh/id_rsa"
 mv "$PUBLIC_KEY_PATH" "$HOME/.ssh/id_rsa.pub"
+chmod 600 "$HOME/.ssh/id_rsa"
+chmod 644 "$HOME/.ssh/id_rsa.pub"
 
 echo "SSH key rotation completed successfully."
