@@ -8,7 +8,7 @@ fi
 
 SERVER_IP=$1
 
-# Sending Client Hello  to the server
+# Sending Client Hello to the server
 echo "Sending Client Hello to $SERVER_IP..."
 CLIENT_HELLO_RESPONSE=$(curl -s -X POST http://$SERVER_IP:8080/clienthello \
     -H "Content-Type: application/json" \
