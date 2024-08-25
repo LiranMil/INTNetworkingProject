@@ -1,40 +1,18 @@
 #!/bin/bash
 
-# Check if the private instance IP is provided
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <private-instance-ip>"
-    exit 1
-fi
+#Rotates the keys of the private instance
+CURRENT_KEY_PATH="/home/ubuntu/.ssh/barrotem-private-instance-key"
+ROLLED_KEY_PATH="/home/ubuntu/.ssh/barrotem-private-instance-key-rolled"
+private_server_ip=${1}
 
-PRIVATE_IP="$1"
-#cp "$HOME/key.pem" "$HOME/.ssh/id_rsa_old"
-
-
-PRIVATE_KEY_PATH="$HOME/.ssh/id_rsa"   # Path to store the new key
-PUBLIC_KEY_PATH="$PRIVATE_KEY_PATH".pub
-
-OLD_PRIVATE_KEY_PATH="$PRIVATE_KEY_PATH".old  # Path to your old key
-mv "$PRIVATE_KEY_PATH" "$OLD_PRIVATE_KEY_PATH"
-
-OLD_KEY_PATH_PUB="$PUBLIC_KEY_PATH".old
-mv "$PUBLIC_KEY_PATH" "$OLD_KEY_PATH_PUB"
-
-# Generate a new SSH key pair
-ssh-keygen -t rsa -b 4096 -f "$PRIVATE_KEY_PATH" -N ""  -C "Key rotated on $(date)" > /dev/null
-chmod 400 "$PRIVATE_KEY_PATH"
-
-# Ensure the old key exists before using it
-#if [ ! -f "$OLD_KEY_PATH" ]; then
-#    echo "Old key not found at $OLD_KEY_PATH"
-#    exit 1
-#fi
-
-if ! ssh -i "$OLD_PRIVATE_KEY_PATH" ubuntu@"$PRIVATE_IP" "cat > ~/.ssh/authorized_keys" < "$PUBLIC_KEY_PATH"; then
-  echo "Failed to copy public key to the private machine"
+if [[ -z private_server_ip ]]
+then
+  echo "Error : Private server ip unspecified."
   exit 1
+else
+  #Create new keyfile, overriding the previous one, redirecting output to /dev/null
+  ssh-keygen -q -f ${ROLLED_KEY_PATH} -N "" -t rsa <<< y > /dev/null
+  scp -q -i ${CURRENT_KEY_PATH} "${ROLLED_KEY_PATH}.pub" ubuntu@${private_server_ip}:"${ROLLED_KEY_PATH}.pub" #Copy new public key to private instance
+  ssh -i ${CURRENT_KEY_PATH} ubuntu@${private_server_ip} "cat ${ROLLED_KEY_PATH}.pub > ~/.ssh/authorized_keys" #Perform key rotation in public instance. ssh session will be disconnected.
+  cp ${ROLLED_KEY_PATH} ${CURRENT_KEY_PATH} #We're back to the public instance. Set current key to the rolled key.
 fi
-
-
-# Test SSH connection with the new key
-echo "connect"
-ssh -o StrictHostKeyChecking=no -i "$NEW_KEY_PATH" ubuntu@"$PRIVATE_IP"
