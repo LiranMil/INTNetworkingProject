@@ -12,7 +12,7 @@ if [ $# -lt 1 ]; then
     exit 5
 fi
 
-# Define variables
+# Define_variables
 PUBLIC_IP=$1
 PRIVATE_IP=$2
 COMMAND=$3
