@@ -28,10 +28,12 @@ if [ ! -f "$NEW_KEY_PATH" ] || [ ! -f "$PUBLIC_KEY_PATH" ]; then
   exit 1
 fi
 
+echo "New SSH key pair generated successfully."
+
 # Copy the new public key to the authorized_keys on the private instance
-NEW_PUBLIC_KEY=$(cat "$PUBLIC_KEY_PATH")
+NEW_PUBLIC_KEY=$(cat "$PUBLIC_KEY_PATH" 2>/dev/null)
 if [ -z "$NEW_PUBLIC_KEY" ]; then
-  echo "Failed to read new public key."
+  echo "Failed to read new public key from $PUBLIC_KEY_PATH."
   exit 1
 fi
 
@@ -51,9 +53,9 @@ if [ $? -ne 0 ]; then
 fi
 
 # Remove the old key from authorized_keys on the private instance
-OLD_PUBLIC_KEY=$(cat "$OLD_KEY_PATH.pub")
+OLD_PUBLIC_KEY=$(cat "$OLD_KEY_PATH.pub" 2>/dev/null)
 if [ -z "$OLD_PUBLIC_KEY" ]; then
-  echo "Failed to read old public key."
+  echo "Failed to read old public key from $OLD_KEY_PATH.pub."
   exit 1
 fi
 
