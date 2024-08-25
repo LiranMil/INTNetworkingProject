@@ -1,4 +1,5 @@
 #!/bin/bash
+$key2=/home/ubuntu/lmkey.pem
 
 # Check if KEY_PATH environment variable is set
 if [ -z "$KEY_PATH" ]; then
@@ -35,6 +36,7 @@ else
         ssh -i "$KEY_PATH" -t ubuntu@"$PUBLIC_IP" ssh -i "$KEY_PATH" ubuntu@"$PRIVATE_IP"
     else
         # Command provided; execute the command on the private instance
-        ssh -i "$KEY_PATH" -t ubuntu@"$PUBLIC_IP" ssh -i "$KEY_PATH" ubuntu@"$PRIVATE_IP" "$COMMAND"
+        ssh -i "$KEY_PATH" -t ubuntu@"$PUBLIC_IP" ssh -i "$key2" ubuntu@"$PRIVATE_IP" "$COMMAND"
     fi
 fi
+
