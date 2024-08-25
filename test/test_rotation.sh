@@ -1,5 +1,5 @@
 set -e
-<<comment
+
 export KEY_PATH=$(pwd)/private_key
 OLD_KEYS=$(bash bastion_connect.sh $PUBLIC_IP $PRIVATE_IP "cat ~/.ssh/authorized_keys")
 
@@ -32,5 +32,5 @@ while read -r old_key; do
     fi
 
 done <<< "$OLD_KEYS"
-comment
+
 echo '✅ Rotation done successfully!'
