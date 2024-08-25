@@ -9,7 +9,7 @@ fi
 
 # Variables
 PRIVATE_IP=$1
-NEW_KEY_PATH="$HOME/.ssh/id_rsa_new1"
+NEW_KEY_PATH="$HOME/.ssh/id_rsa_new"
 PUBLIC_KEY_PATH="$NEW_KEY_PATH.pub"
 OLD_KEY_PATH="$HOME/.ssh/id_rsa"
 
