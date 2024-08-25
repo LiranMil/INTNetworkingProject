@@ -21,7 +21,6 @@ chmod 600 $NEW_KEY_PATH
 NEW_PUBLIC_KEY=$(cat $PUBLIC_KEY_PATH)
 echo "new_public_process"
 ssh -i "$OLD_KEY_PATH" ubuntu@$PRIVATE_IP "echo '$NEW_PUBLIC_KEY' >> ~/.ssh/authorized_keys"
-echo "ssh -i old key"
 
 # Verify the new key works
 ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP 'exit'
