@@ -6,15 +6,11 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
-
 # Variables
 PRIVATE_IP=$1
 NEW_KEY_PATH="$HOME/.ssh/id_rsa_new"
 PUBLIC_KEY_PATH="$NEW_KEY_PATH.pub"
 OLD_KEY_PATH="$HOME/.ssh/id_rsa"
-
-
-
 
 # Generate a new SSH key pair
 ssh-keygen -t rsa -b 4096 -f $NEW_KEY_PATH -N ""
@@ -33,9 +29,7 @@ fi
 
 # Remove the old key from authorized_keys on the private instance
 OLD_PUBLIC_KEY=$(cat $OLD_KEY_PATH.pub)
-ESCAPED_OLD_KEY=$(echo "$OLD_PUBLIC_KEY" | sed 's/[\/&]/\\&/g')
-ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP "sed -i '/$ESCAPED_OLD_KEY/d' ~/.ssh/authorized_keys"
-#ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP "grep -v '$OLD_PUBLIC_KEY' ~/.ssh/authorized_keys > ~/.ssh/authorized_keys.tmp && mv ~/.ssh/authorized_keys.tmp ~/.ssh/authorized_keys"
+ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP "grep -v '$OLD_PUBLIC_KEY' ~/.ssh/authorized_keys > ~/.ssh/authorized_keys.tmp && mv ~/.ssh/authorized_keys.tmp ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
 
 # Verify the old key no longer works
 ssh -i "$OLD_KEY_PATH" ubuntu@$PRIVATE_IP 'exit'
