@@ -13,7 +13,7 @@ NEW_KEY_PATH="$HOME/.ssh/id_rsa_new"
 PUBLIC_KEY_PATH="$NEW_KEY_PATH.pub"
 OLD_KEY_PATH="$HOME/.ssh/id_rsa"
 
-## Generate a new SSH key pair
+# Generate a new SSH key pair
 ssh-keygen -t rsa -b 4096 -f "$NEW_KEY_PATH" -N ""
 chmod 600 "$NEW_KEY_PATH"
 
