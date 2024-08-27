@@ -115,5 +115,5 @@ then
   exit 1
 fi
 
-echo '✅ Test case V was completed successfully!'
+echo '✅ Test case V was completed successfully! '
 
