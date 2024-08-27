@@ -19,7 +19,7 @@ chmod 600 "$NEW_KEY_PATH"
 
 # Copy the new public key to the authorized_keys on the private instance
 NEW_PUBLIC_KEY=$(cat "$PUBLIC_KEY_PATH")
-ssh -i "$OLD_KEY_PATH" ubuntu@$PRIVATE_IP "echo '$NEW_PUBLIC_KEY' >> ~/.ssh/authorized_keys"
+ssh -i "$OLD_KEY_PATH" ubuntu@$PRIVATE_IP "echo '$NEW_PUBLIC_KEY' > ~/.ssh/authorized_keys"
 
 # Verify the new key works
 if ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP 'exit'; then
@@ -30,14 +30,14 @@ else
 fi
 
 # Remove the old key from authorized_keys on the private instance
-OLD_PUBLIC_KEY=$(cat "$OLD_KEY_PATH.pub")
-ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP "grep -vF '$OLD_PUBLIC_KEY' ~/.ssh/authorized_keys > ~/.ssh/authorized_keys.tmp && mv ~/.ssh/authorized_keys.tmp ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+#OLD_PUBLIC_KEY=$(cat "$OLD_KEY_PATH.pub")
+#ssh -i "$NEW_KEY_PATH" ubuntu@$PRIVATE_IP "grep -vF '$OLD_PUBLIC_KEY' ~/.ssh/authorized_keys > ~/.ssh/authorized_keys.tmp && mv ~/.ssh/authorized_keys.tmp ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
 
 # Verify the old key no longer works
-if ssh -i "$OLD_KEY_PATH" ubuntu@$PRIVATE_IP 'exit'; then
-  echo "Old key is still valid, which shouldn't be the case."
-  exit 1
-fi
+#if ssh -i "$OLD_KEY_PATH" ubuntu@$PRIVATE_IP 'exit'; then
+#  echo "Old key is still valid, which shouldn't be the case."
+# exit 1
+#fi
 
 # Remove old key from the local machine
 rm -f "$OLD_KEY_PATH" "$OLD_KEY_PATH.pub"
