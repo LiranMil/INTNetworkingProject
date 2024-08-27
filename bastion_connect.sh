@@ -3,7 +3,7 @@
 bsto="$1"
 rem="$2"
 cmd="$3"
-remkey="/home/ubuntu/lmkey.pem"
+remkey="/home/ubuntu/.ssh/id_rsa"
 
 # Check if KEY_PATH is set
 if [ -z "$KEY_PATH" ]; then
